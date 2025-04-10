@@ -1,0 +1,730 @@
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 sidebar p-4">
+            <div class="text-center mb-4">
+                <h4>Welcome, Dr. {{ session.name }}</h4>
+                <p class="mb-0">Doctor Dashboard</p>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active text-white" href="#appointments" data-bs-toggle="tab">
+                        <i class="bi bi-calendar-check me-2"></i>Appointments
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#history" data-bs-toggle="tab">
+                        <i class="bi bi-clock-history me-2"></i>Appointment History
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#admissions" data-bs-toggle="tab">
+                        <i class="bi bi-hospital me-2"></i>Admissions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{{ url_for('doctor_logout') }}">
+                        <i class="bi bi-box-arrow-left me-2"></i>Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 main-content">
+            <div class="tab-content">
+                <!-- Appointments Tab -->
+                <div class="tab-pane fade show active" id="appointments">
+                    <h3 class="mb-4">Today's Appointments</h3>
+                    {% if appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Prescription</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appt in appointments %}
+                                <tr>
+                                    <td>{{ appt.patient_name }}</td>
+                                    <td>{{ appt.date }}</td>
+                                    <td>{{ appt.time }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if appt.status == 'scheduled' %}bg-primary
+                                            {% elif appt.status == 'attended' %}bg-success
+                                            {% elif appt.status == 'cancelled' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ appt.status }}
+                                        </span>
+                                        {% if appt.is_admitted %}
+                                        <span class="badge bg-warning ms-1">Admitted</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if appt.prescription and appt.status == 'attended' %}
+                                        <button class="btn btn-sm btn-info"
+                                           data-bs-toggle="modal" 
+                                           data-bs-target="#viewPrescriptionModal"
+                                           data-appointment-id="{{ appt._id }}"
+                                           data-patient-name="{{ appt.patient_name }}"
+                                           data-appointment-date="{{ appt.date }} {{ appt.time }}">
+                                            View
+                                        </button>
+                                        {% elif appt.status == 'attended' %}
+                                        <span class="text-muted">None</span>
+                                        {% else %}
+                                        <span class="text-muted">Not available</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if appt.status == 'scheduled' or appt.status == 'attended' %}
+                                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" 
+                                                data-bs-target="#updateModal{{ appt._id }}">
+                                            Update
+                                        </button>
+                                        {% endif %}
+                                        {% if appt.status == 'scheduled' %}
+                                        <a href="{{ url_for('doctor_delete_appointment', appointment_id=appt._id) }}" 
+                                           class="btn btn-sm btn-danger" 
+                                           onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                            Cancel
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+
+                                <!-- Update Modal for each appointment -->
+                                <div class="modal fade" id="updateModal{{ appt._id }}" tabindex="-1" 
+                                     aria-labelledby="updateModalLabel{{ appt._id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="updateModalLabel{{ appt._id }}">Update Appointment</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form method="POST" action="{{ url_for('update_appointment', appointment_id=appt._id) }}">
+                                                <div class="modal-body">
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="status{{ appt._id }}" class="form-label">Status</label>
+                                                                <select class="form-select" id="status{{ appt._id }}" name="status" required>
+                                                                    <option value="scheduled" {% if appt.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                                                                    <option value="attended" {% if appt.status == 'attended' %}selected{% endif %}>Attended</option>
+                                                                    <option value="cancelled" {% if appt.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Patient</label>
+                                                                <input type="text" class="form-control" value="{{ appt.patient_name }}" readonly>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="remarks{{ appt._id }}" class="form-label">Remarks</label>
+                                                        <textarea class="form-control" id="remarks{{ appt._id }}" name="remarks" rows="3">{{ appt.remarks }}</textarea>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="prescription{{ appt._id }}" class="form-label">Prescription</label>
+                                                        <textarea class="form-control" id="prescription{{ appt._id }}" name="prescription" rows="6" 
+                                                              placeholder="Enter prescription details...">{{ appt.prescription if appt.prescription else '' }}</textarea>
+                                                        <small class="text-muted">Enter one medicine per line with dosage instructions</small>
+                                                    </div>
+                                                    
+                                                    <!-- Admission Section -->
+                                                    <div class="card mt-3">
+                                                        <div class="card-header bg-info text-white">
+                                                            <h5 class="mb-0">Hospital Admission</h5>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="form-check mb-3">
+                                                                <input class="form-check-input" type="checkbox" 
+                                                                       id="admitCheckbox{{ appt._id }}" 
+                                                                       name="admit_patient" 
+                                                                       {% if appt.is_admitted %}checked disabled{% endif %}>
+                                                                <label class="form-check-label" for="admitCheckbox{{ appt._id }}">
+                                                                    Admit Patient to Hospital
+                                                                </label>
+                                                            </div>
+                                                            
+                                                            <div id="admissionFields{{ appt._id }}" style="{% if not appt.is_admitted %}display: none;{% endif %}">
+                                                                <div class="row">
+                                                                    <div class="col-md-6">
+                                                                        <div class="mb-3">
+                                                                            <label for="ward{{ appt._id }}" class="form-label">Ward</label>
+                                                                            <select class="form-select" id="ward{{ appt._id }}" name="ward_id" {% if appt.is_admitted %}disabled{% endif %} required>
+                                                                                <option value="">Select Ward</option>
+                                                                                {% for ward in available_wards %}
+                                                                                <option value="{{ ward._id }}" 
+                                                                                        {% if appt.is_admitted and appt.admission_details.ward_id == ward._id|string %}selected{% endif %}>
+                                                                                    {{ ward.name }} (₹{{ ward.price_per_day }}/day)
+                                                                                </option>
+                                                                                {% endfor %}
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="mb-3">
+                                                                            <label for="days{{ appt._id }}" class="form-label">Estimated Stay (Days)</label>
+                                                                            <input type="number" class="form-control" id="days{{ appt._id }}" 
+                                                                                   name="days" min="1" value="{% if appt.is_admitted %}{{ appt.admission_details.days }}{% else %}1{% endif %}" 
+                                                                                   {% if appt.is_admitted %}disabled{% endif %} required>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="reason{{ appt._id }}" class="form-label">Reason for Admission</label>
+                                                                    <input type="text" class="form-control" id="reason{{ appt._id }}" 
+                                                                           name="reason" value="{% if appt.is_admitted %}{{ appt.admission_details.reason }}{% endif %}" 
+                                                                           {% if appt.is_admitted %}disabled{% endif %} required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="notes{{ appt._id }}" class="form-label">Medical Notes</label>
+                                                                    <textarea class="form-control" id="notes{{ appt._id }}" 
+                                                                              name="admission_notes" rows="3" {% if appt.is_admitted %}disabled{% endif %}>{% if appt.is_admitted %}{{ appt.admission_details.notes }}{% endif %}</textarea>
+                                                                </div>
+                                                                
+                                                                {% if appt.is_admitted %}
+                                                                <div class="alert alert-info">
+                                                                    Patient is currently admitted. To discharge, go to Admissions tab.
+                                                                </div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">You have no appointments scheduled for today.</div>
+                    {% endif %}
+                </div>
+
+                <!-- History Tab -->
+                <div class="tab-pane fade" id="history">
+                    <h3 class="mb-4">Appointment History</h3>
+                    {% if appointment_history %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Prescription</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appt in appointment_history %}
+                                <tr>
+                                    <td>{{ appt.patient_name }}</td>
+                                    <td>{{ appt.date }}</td>
+                                    <td>{{ appt.time }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if appt.status == 'scheduled' %}bg-primary
+                                            {% elif appt.status == 'attended' %}bg-success
+                                            {% elif appt.status == 'cancelled' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ appt.status }}
+                                        </span>
+                                        {% if appt.is_admitted %}
+                                        <span class="badge bg-warning ms-1">Admitted</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if appt.prescription %}
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                                data-bs-target="#historyPrescriptionModal"
+                                                data-appointment-id="{{ appt._id }}"
+                                                data-patient-name="{{ appt.patient_name }}"
+                                                data-appointment-date="{{ appt.date }} {{ appt.time }}"
+                                                data-remarks="{{ appt.remarks }}">
+                                            View
+                                        </button>
+                                        {% else %}
+                                        <span class="text-muted">None</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ appt.remarks }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No appointment history found.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Admissions Tab -->
+                <div class="tab-pane fade" id="admissions">
+                    <h3 class="mb-4">Patient Admissions</h3>
+                    
+                    <!-- Current Admissions -->
+                    <h4 class="mb-3">Current Admissions</h4>
+                    {% if current_admissions %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Ward</th>
+                                    <th>Admitted On</th>
+                                    <th>Duration</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for admission in current_admissions %}
+                                <tr>
+                                    <td>{{ admission.patient_name }}</td>
+                                    <td>{{ admission.admission_details.ward_name }}</td>
+                                    <td>{{ admission.admission_details.admitted_on.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ admission.admission_details.days }} days</td>
+                                    <td>{{ admission.admission_details.reason }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if admission.admission_details.status == 'admitted' %}success{% else %}warning{% endif %}">
+                                            {{ admission.admission_details.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                                data-bs-target="#admissionDetailsModal"
+                                                data-admission-id="{{ admission._id }}"
+                                                data-patient-name="{{ admission.patient_name }}"
+                                                data-ward-name="{{ admission.admission_details.ward_name }}"
+                                                data-admitted-on="{{ admission.admission_details.admitted_on }}"
+                                                data-days="{{ admission.admission_details.days }}"
+                                                data-reason="{{ admission.admission_details.reason }}"
+                                                data-notes="{{ admission.admission_details.notes }}"
+                                                data-status="{{ admission.admission_details.status }}">
+                                            Details
+                                        </button>
+                                        {% if admission.admission_details.status == 'admitted' %}
+                                        <button class="btn btn-sm btn-warning" data-bs-toggle="modal" 
+                                                data-bs-target="#dischargeModal"
+                                                data-admission-id="{{ admission._id }}"
+                                                data-patient-name="{{ admission.patient_name }}">
+                                            Discharge
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No current admissions found.</div>
+                    {% endif %}
+                    
+                    <!-- Admission History -->
+                    <h4 class="mt-4 mb-3">Admission History</h4>
+                    {% if admission_history %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Ward</th>
+                                    <th>Admitted On</th>
+                                    <th>Discharged On</th>
+                                    <th>Duration</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for admission in admission_history %}
+                                <tr>
+                                    <td>{{ admission.patient_name }}</td>
+                                    <td>{{ admission.admission_details.ward_name }}</td>
+                                    <td>{{ admission.admission_details.admitted_on.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if admission.admission_details.discharge_date %}
+                                        {{ admission.admission_details.discharge_date.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ admission.admission_details.days }} days</td>
+                                    <td>{{ admission.admission_details.reason }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No admission history found.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Prescription Modal -->
+<div class="modal fade" id="viewPrescriptionModal" tabindex="-1" aria-labelledby="viewPrescriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewPrescriptionModalLabel">Prescription Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="prescription-header mb-4">
+                    <h4>Medical Prescription</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Patient:</strong> <span id="modal-patient-name"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Date:</strong> <span id="modal-appointment-date"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="prescription-content">
+                    <h5>Prescription:</h5>
+                    <div id="modal-prescription" class="p-3 bg-light rounded"></div>
+                </div>
+                <div class="mt-3">
+                    <h5>Doctor Remarks:</h5>
+                    <div id="modal-remarks" class="p-3 bg-light rounded"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="download-prescription-btn">Download</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History Prescription Modal -->
+<div class="modal fade" id="historyPrescriptionModal" tabindex="-1" aria-labelledby="historyPrescriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historyPrescriptionModalLabel">Prescription Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="prescription-header mb-4">
+                    <h4>Medical Prescription</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Patient:</strong> <span id="history-patient-name"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Date:</strong> <span id="history-appointment-date"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="prescription-content">
+                    <h5>Prescription:</h5>
+                    <div id="history-prescription" class="p-3 bg-light rounded"></div>
+                </div>
+                <div class="mt-3">
+                    <h5>Doctor Remarks:</h5>
+                    <div id="history-remarks" class="p-3 bg-light rounded"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="download-history-prescription-btn">Download</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admission Details Modal -->
+<div class="modal fade" id="admissionDetailsModal" tabindex="-1" aria-labelledby="admissionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="admissionDetailsModalLabel">Admission Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="admission-header mb-4">
+                    <h4>Hospital Admission Record</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Patient:</strong> <span id="modal-admission-patient"></span></p>
+                            <p><strong>Ward:</strong> <span id="modal-admission-ward"></span></p>
+                            <p><strong>Admitted On:</strong> <span id="modal-admission-date"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Duration:</strong> <span id="modal-admission-days"></span> days</p>
+                            <p><strong>Status:</strong> <span id="modal-admission-status" class="badge"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="admission-content">
+                    <h5>Reason for Admission:</h5>
+                    <div id="modal-admission-reason" class="p-3 bg-light rounded mb-3"></div>
+                    
+                    <h5>Medical Notes:</h5>
+                    <div id="modal-admission-notes" class="p-3 bg-light rounded"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Discharge Modal -->
+<div class="modal fade" id="dischargeModal" tabindex="-1" aria-labelledby="dischargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="dischargeModalLabel">Discharge Patient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="dischargePatientText">Are you sure you want to discharge this patient?</p>
+                <form id="dischargeForm">
+                    <input type="hidden" id="dischargeAdmissionId" name="admission_id">
+                    <div class="mb-3">
+                        <label for="dischargeNotes" class="form-label">Discharge Summary</label>
+                        <textarea class="form-control" id="dischargeNotes" name="discharge_notes" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmDischargeBtn">Confirm Discharge</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle prescription modal for current appointments
+    const viewPrescriptionModal = document.getElementById('viewPrescriptionModal');
+    if (viewPrescriptionModal) {
+        viewPrescriptionModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const appointmentId = button.getAttribute('data-appointment-id');
+            const patientName = button.getAttribute('data-patient-name');
+            const appointmentDateTime = button.getAttribute('data-appointment-date');
+            
+            // Set basic info from data attributes
+            document.getElementById('modal-patient-name').textContent = patientName;
+            document.getElementById('modal-appointment-date').textContent = appointmentDateTime;
+            
+            // Clear previous content while loading
+            document.getElementById('modal-prescription').textContent = 'Loading...';
+            document.getElementById('modal-remarks').textContent = 'Loading...';
+            
+            // Set download button attribute
+            document.getElementById('download-prescription-btn').setAttribute('data-appointment-id', appointmentId);
+            
+            // Fetch full appointment details including prescription
+            fetch(`/doctor/prescription/${appointmentId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Update modal content
+                    document.getElementById('modal-prescription').innerHTML = 
+                        data.prescription ? data.prescription.replace(/\n/g, '<br>') : 'No prescription provided';
+                    document.getElementById('modal-remarks').textContent = 
+                        data.remarks || 'No remarks provided';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('modal-prescription').textContent = 'Error loading prescription';
+                    document.getElementById('modal-remarks').textContent = 'Error loading remarks';
+                });
+        });
+    }
+
+    // Handle prescription modal for history appointments
+    const historyPrescriptionModal = document.getElementById('historyPrescriptionModal');
+    if (historyPrescriptionModal) {
+        historyPrescriptionModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const appointmentId = button.getAttribute('data-appointment-id');
+            const patientName = button.getAttribute('data-patient-name');
+            const appointmentDateTime = button.getAttribute('data-appointment-date');
+            const remarks = button.getAttribute('data-remarks');
+            
+            // Set basic info from data attributes
+            document.getElementById('history-patient-name').textContent = patientName;
+            document.getElementById('history-appointment-date').textContent = appointmentDateTime;
+            document.getElementById('history-remarks').textContent = remarks || 'No remarks provided';
+            
+            // Clear previous content while loading
+            document.getElementById('history-prescription').textContent = 'Loading...';
+            
+            // Set download button attribute
+            document.getElementById('download-history-prescription-btn').setAttribute('data-appointment-id', appointmentId);
+            
+            // Fetch prescription
+            fetch(`/doctor/prescription/${appointmentId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Update modal content
+                    document.getElementById('history-prescription').innerHTML = 
+                        data.prescription ? data.prescription.replace(/\n/g, '<br>') : 'No prescription provided';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('history-prescription').textContent = 'Error loading prescription';
+                });
+        });
+    }
+
+    // Handle admission details modal
+    const admissionModal = document.getElementById('admissionDetailsModal');
+    if (admissionModal) {
+        admissionModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            
+            // Set data from button attributes
+            document.getElementById('modal-admission-patient').textContent = button.getAttribute('data-patient-name');
+            document.getElementById('modal-admission-ward').textContent = button.getAttribute('data-ward-name');
+            document.getElementById('modal-admission-date').textContent = new Date(button.getAttribute('data-admitted-on')).toLocaleString();
+            document.getElementById('modal-admission-days').textContent = button.getAttribute('data-days');
+            document.getElementById('modal-admission-reason').textContent = button.getAttribute('data-reason');
+            document.getElementById('modal-admission-notes').textContent = button.getAttribute('data-notes') || 'No notes provided';
+            
+            // Set status badge
+            const statusBadge = document.getElementById('modal-admission-status');
+            const status = button.getAttribute('data-status');
+            statusBadge.textContent = status;
+            statusBadge.className = 'badge bg-' + (status === 'admitted' ? 'success' : 'warning');
+        });
+    }
+
+    // Handle discharge modal
+    const dischargeModal = document.getElementById('dischargeModal');
+    if (dischargeModal) {
+        dischargeModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const admissionId = button.getAttribute('data-admission-id');
+            const patientName = button.getAttribute('data-patient-name');
+            
+            document.getElementById('dischargeAdmissionId').value = admissionId;
+            document.getElementById('dischargePatientText').textContent = 
+                `Are you sure you want to discharge ${patientName}?`;
+        });
+    }
+
+    // Confirm discharge button
+    document.getElementById('confirmDischargeBtn')?.addEventListener('click', function() {
+        const admissionId = document.getElementById('dischargeAdmissionId').value;
+        const dischargeNotes = document.getElementById('dischargeNotes').value;
+        
+        if (!dischargeNotes) {
+            alert('Please enter discharge summary');
+            return;
+        }
+        
+        fetch('/doctor/discharge_patient', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                admission_id: admissionId,
+                discharge_notes: dischargeNotes
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error discharging patient');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error discharging patient');
+        });
+    });
+
+    // Handle download prescription button
+    document.getElementById('download-prescription-btn')?.addEventListener('click', function() {
+        const appointmentId = this.getAttribute('data-appointment-id');
+        window.location.href = `/patient/prescription/${appointmentId}/download`;
+    });
+
+    document.getElementById('download-history-prescription-btn')?.addEventListener('click', function() {
+        const appointmentId = this.getAttribute('data-appointment-id');
+        window.location.href = `/patient/prescription/${appointmentId}/download`;
+    });
+
+    // Toggle admission fields when checkbox is clicked
+    document.querySelectorAll('[id^="admitCheckbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const appointmentId = this.id.replace('admitCheckbox', '');
+            const admissionFields = document.getElementById(`admissionFields${appointmentId}`);
+            admissionFields.style.display = this.checked ? 'block' : 'none';
+            
+            // Toggle required attribute on admission fields
+            const requiredFields = admissionFields.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                field.required = this.checked;
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

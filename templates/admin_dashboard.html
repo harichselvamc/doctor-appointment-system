@@ -1,0 +1,992 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 sidebar p-4">
+            <div class="text-center mb-4">
+                <h4>Welcome, Admin</h4>
+                <p class="mb-0">Administrator Dashboard</p>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active text-white" href="#dashboard" data-bs-toggle="tab">
+                        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#doctors" data-bs-toggle="tab">
+                        <i class="bi bi-people me-2"></i>Doctors
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#patients" data-bs-toggle="tab">
+                        <i class="bi bi-person-heart me-2"></i>Patients
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#appointments" data-bs-toggle="tab">
+                        <i class="bi bi-calendar-check me-2"></i>Appointments
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#emergencies" data-bs-toggle="tab">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Emergencies
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#messages" data-bs-toggle="tab">
+                        <i class="bi bi-envelope me-2"></i>Messages
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#admissions" data-bs-toggle="tab">
+                        <i class="bi bi-hospital me-2"></i>Admissions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#wards" data-bs-toggle="tab">
+                        <i class="bi bi-building me-2"></i>Ward Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{{ url_for('admin_logout') }}">
+                        <i class="bi bi-box-arrow-left me-2"></i>Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 main-content">
+            <div class="tab-content">
+                <!-- Dashboard Tab -->
+                <div class="tab-pane fade show active" id="dashboard">
+                    <h3 class="mb-4">System Overview</h3>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card text-white bg-primary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Doctors</h5>
+                                    <p class="card-text display-4">{{ doctor_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-success mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Patients</h5>
+                                    <p class="card-text display-4">{{ patient_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-info mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Appointments</h5>
+                                    <p class="card-text display-4">{{ appointment_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card text-white bg-warning mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Emergencies</h5>
+                                    <p class="card-text display-4">{{ emergency_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-danger mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Messages</h5>
+                                    <p class="card-text display-4">{{ message_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-secondary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Current Admissions</h5>
+                                    <p class="card-text display-4">{{ current_admissions|length }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Admissions -->
+                    <h4 class="mt-4">Recent Admissions</h4>
+                    {% if current_admissions %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Ward</th>
+                                    <th>Admitted On</th>
+                                    <th>Status</th>
+                                  
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for admission in current_admissions[:5] %}
+                                <tr>
+                                    <td>{{ admission.patient_name }}</td>
+                                    <td>{{ admission.doctor_name }}</td>
+                                    <td>{{ admission.admission_details.ward_name }}</td>
+                                    <td>{{ admission.admission_details.admitted_on.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if admission.admission_details.status == 'admitted' %}success{% else %}warning{% endif %}">
+                                            {{ admission.admission_details.status|title }}
+                                        </span>
+                                    </td>
+                                   
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No current admissions found.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Doctors Tab -->
+                <div class="tab-pane fade" id="doctors">
+                    <h3 class="mb-4">Doctor Management</h3>
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Add New Doctor</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('add_doctor') }}">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="doctor_name" class="form-label">Name</label>
+                                            <input type="text" class="form-control" id="doctor_name" name="name" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="doctor_email" class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="doctor_email" name="email" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="doctor_password" class="form-label">Password</label>
+                                            <input type="password" class="form-control" id="doctor_password" name="password" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="doctor_confirm_password" class="form-label">Confirm Password</label>
+                                            <input type="password" class="form-control" id="doctor_confirm_password" name="confirm_password" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="doctor_department" class="form-label">Department</label>
+                                            <input type="text" class="form-control" id="doctor_department" name="department" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="doctor_fees" class="form-label">Consultancy Fees</label>
+                                            <input type="number" class="form-control" id="doctor_fees" name="consultancy_fees" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Add Doctor</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <h4 class="mb-3">Doctor List</h4>
+                    {% if doctors %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>Fees</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doctor in doctors %}
+                                <tr>
+                                    <td>{{ doctor.name }}</td>
+                                    <td>{{ doctor.email }}</td>
+                                    <td>{{ doctor.department }}</td>
+                                    <td>₹{{ doctor.consultancy_fees }}</td>
+                                    <td>
+                                        <a href="{{ url_for('delete_doctor', doctor_id=doctor._id) }}" 
+                                           class="btn btn-sm btn-danger" 
+                                           onclick="return confirm('Are you sure you want to delete this doctor?')">
+                                            Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No doctors found.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Patients Tab -->
+                <div class="tab-pane fade" id="patients">
+                    <h3 class="mb-4">Patient Management</h3>
+                    {% if patients %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Age</th>
+                                    <th>Blood Group</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for patient in patients %}
+                                <tr>
+                                    <td>{{ patient.name }}</td>
+                                    <td>{{ patient.email }}</td>
+                                    <td>{{ patient.phone }}</td>
+                                    <td>{{ patient.age }}</td>
+                                    <td>{{ patient.blood_group }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                                data-bs-target="#patientDetailsModal"
+                                                data-patient-id="{{ patient._id }}">
+                                            Details
+                                        </button>
+                                        <a href="{{ url_for('delete_patient', patient_id=patient._id) }}" 
+                                           class="btn btn-sm btn-danger" 
+                                           onclick="return confirm('Are you sure you want to delete this patient?')">
+                                            Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No patients found.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Appointments Tab -->
+                <div class="tab-pane fade" id="appointments">
+                    <h3 class="mb-4">Appointment Management</h3>
+                    {% if appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Department</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appt in appointments %}
+                                <tr>
+                                    <td>{{ appt.patient_name }}</td>
+                                    <td>{{ appt.doctor_name }}</td>
+                                    <td>{{ appt.department }}</td>
+                                    <td>{{ appt.date }}</td>
+                                    <td>{{ appt.time }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if appt.status == 'scheduled' %}bg-primary
+                                            {% elif appt.status == 'attended' %}bg-success
+                                            {% elif appt.status == 'cancelled' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ appt.status }}
+                                        </span>
+                                        {% if appt.is_admitted %}
+                                        <span class="badge bg-warning ms-1">Admitted</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                                data-bs-target="#appointmentDetailsModal"
+                                                data-appointment-id="{{ appt._id }}">
+                                            Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No appointments found.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Emergencies Tab -->
+                <div class="tab-pane fade" id="emergencies">
+                    <h3 class="mb-4">Emergency Cases</h3>
+                    {% if emergencies %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Guardian</th>
+                                    <th>Phone</th>
+                                    <th>Doctor</th>
+                                    <th>Department</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for emergency in emergencies %}
+                                <tr>
+                                    <td>{{ emergency.name }}</td>
+                                    <td>{{ emergency.guardian_name }}</td>
+                                    <td>{{ emergency.guardian_phone }}</td>
+                                    <td>{{ emergency.doctor_name }}</td>
+                                    <td>{{ emergency.department }}</td>
+                                    <td>{{ emergency.created_on.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if emergency.status == 'pending' %}warning{% else %}success{% endif %}">
+                                            {{ emergency.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                                data-bs-target="#emergencyDetailsModal"
+                                                data-emergency-id="{{ emergency._id }}">
+                                            Details
+                                        </button>
+                                        <a href="{{ url_for('delete_emergency', emergency_id=emergency._id) }}" 
+                                           class="btn btn-sm btn-danger" 
+                                           onclick="return confirm('Are you sure you want to delete this emergency case?')">
+                                            Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No emergency cases found.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Messages Tab -->
+                <div class="tab-pane fade" id="messages">
+                    <h3 class="mb-4">Patient Messages</h3>
+                    {% if messages %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Message</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for message in messages %}
+                                <tr>
+                                    <td>{{ message.name }}</td>
+                                    <td>{{ message.email }}</td>
+                                    <td>{{ message.phone }}</td>
+                                    <td>{{ message.message[:50] }}{% if message.message|length > 50 %}...{% endif %}</td>
+                                    <td>{{ message.date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                                data-bs-target="#messageDetailsModal"
+                                                data-message-id="{{ message._id }}">
+                                            View
+                                        </button>
+                                        <a href="{{ url_for('delete_message', message_id=message._id) }}" 
+                                           class="btn btn-sm btn-danger" 
+                                           onclick="return confirm('Are you sure you want to delete this message?')">
+                                            Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No messages found.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Admissions Tab -->
+                <div class="tab-pane fade" id="admissions">
+                    <h3 class="mb-4">Hospital Admissions</h3>
+                    
+                    <!-- Current Admissions -->
+                    <h4 class="mt-4 mb-3">Current Admissions</h4>
+                    {% if current_admissions %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Ward</th>
+                                    <th>Admitted On</th>
+                                    <th>Duration</th>
+                                    <th>Charges</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for admission in current_admissions %}
+                                <tr>
+                                    <td>{{ admission.patient_name }}</td>
+                                    <td>{{ admission.doctor_name }}</td>
+                                    <td>{{ admission.admission_details.ward_name }}</td>
+                                    <td>{{ admission.admission_details.admitted_on.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ admission.admission_details.days }} days</td>
+                                    <td>₹{{ admission.admission_details.total_charges }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if admission.admission_details.status == 'admitted' %}success{% else %}warning{% endif %}">
+                                            {{ admission.admission_details.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                                data-bs-target="#admissionDetailsModal"
+                                                data-admission-id="{{ admission._id }}">
+                                            Details
+                                        </button>
+                                        {% if admission.admission_details.status == 'admitted' %}
+                                        <button class="btn btn-sm btn-warning" data-bs-toggle="modal" 
+                                                data-bs-target="#dischargeModal"
+                                                data-admission-id="{{ admission._id }}"
+                                                data-patient-name="{{ admission.patient_name }}">
+                                            Discharge
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No current admissions found.</div>
+                    {% endif %}
+                    
+                    <!-- Admission History -->
+                    <h4 class="mt-4 mb-3">Admission History</h4>
+                    {% if admission_history %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Ward</th>
+                                    <th>Admitted On</th>
+                                    <th>Discharged On</th>
+                                    <th>Duration</th>
+                                    <th>Charges</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for admission in admission_history %}
+                                <tr>
+                                    <td>{{ admission.patient_name }}</td>
+                                    <td>{{ admission.doctor_name }}</td>
+                                    <td>{{ admission.admission_details.ward_name }}</td>
+                                    <td>{{ admission.admission_details.admitted_on.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if admission.admission_details.discharge_date %}
+                                        {{ admission.admission_details.discharge_date.strftime('%Y-%m-%d') }}
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ admission.admission_details.days }} days</td>
+                                    <td>₹{{ admission.admission_details.total_charges }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No admission history found.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Ward Management Tab -->
+                <div class="tab-pane fade" id="wards">
+                    <h3 class="mb-4">Ward Management</h3>
+                    
+                    <!-- Add New Ward Form -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Add New Ward</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="addWardForm">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="ward_name" class="form-label">Ward Name</label>
+                                            <input type="text" class="form-control" id="ward_name" name="name" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="ward_capacity" class="form-label">Capacity</label>
+                                            <input type="number" class="form-control" id="ward_capacity" name="capacity" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="ward_price" class="form-label">Price Per Day (₹)</label>
+                                            <input type="number" class="form-control" id="ward_price" name="price_per_day" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Add Ward</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Ward Status -->
+                    <h4 class="mb-3">Ward Status</h4>
+                    {% if ward_status %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Ward Name</th>
+                                    <th>Capacity</th>
+                                    <th>Available</th>
+                                    <th>Occupied</th>
+                                    <th>Price/Day</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ward in ward_status %}
+                                <tr>
+                                    <td>{{ ward.name }}</td>
+                                    <td>{{ ward.capacity }}</td>
+                                    <td>{{ ward.available }}</td>
+                                    <td>{{ ward.capacity - ward.available }}</td>
+                                    <td>₹{{ ward.price_per_day }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                                data-bs-target="#editWardModal"
+                                                data-ward-id="{{ ward._id }}"
+                                                data-ward-name="{{ ward.name }}"
+                                                data-ward-capacity="{{ ward.capacity }}"
+                                                data-ward-price="{{ ward.price_per_day }}">
+                                            Edit
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" 
+                                                onclick="deleteWard('{{ ward._id }}')">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No wards found.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admission Details Modal -->
+<div class="modal fade" id="admissionDetailsModal" tabindex="-1" aria-labelledby="admissionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="admissionDetailsModalLabel">Admission Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="admissionDetailsContent">
+                Loading admission details...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="printAdmissionBtn">Print Details</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Discharge Modal -->
+<div class="modal fade" id="dischargeModal" tabindex="-1" aria-labelledby="dischargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="dischargeModalLabel">Discharge Patient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="dischargePatientText">Are you sure you want to discharge this patient?</p>
+                <form id="dischargeForm">
+                    <input type="hidden" id="dischargeAdmissionId" name="admission_id">
+                    <div class="mb-3">
+                        <label for="dischargeNotes" class="form-label">Discharge Notes</label>
+                        <textarea class="form-control" id="dischargeNotes" name="discharge_notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmDischargeBtn">Confirm Discharge</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Ward Modal -->
+<div class="modal fade" id="editWardModal" tabindex="-1" aria-labelledby="editWardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editWardModalLabel">Edit Ward Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editWardForm">
+                    <input type="hidden" id="editWardId" name="ward_id">
+                    <div class="mb-3">
+                        <label for="editWardName" class="form-label">Ward Name</label>
+                        <input type="text" class="form-control" id="editWardName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editWardCapacity" class="form-label">Capacity</label>
+                        <input type="number" class="form-control" id="editWardCapacity" name="capacity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editWardPrice" class="form-label">Price Per Day (₹)</label>
+                        <input type="number" class="form-control" id="editWardPrice" name="price_per_day" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveWardBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle admission details modal
+    const admissionModal = document.getElementById('admissionDetailsModal');
+    if (admissionModal) {
+        admissionModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const admissionId = button.getAttribute('data-admission-id');
+            
+            fetch(`/get_admission_details/${admissionId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    const admission = data.admission;
+                    let html = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Patient Name:</strong> ${admission.patient_name}</p>
+                                <p><strong>Doctor:</strong> ${admission.doctor_name}</p>
+                                <p><strong>Ward:</strong> ${admission.ward_name}</p>
+                                <p><strong>Admitted On:</strong> ${new Date(admission.admitted_on).toLocaleString()}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Reason:</strong> ${admission.reason}</p>
+                                <p><strong>Duration:</strong> ${admission.days} days</p>
+                                <p><strong>Total Charges:</strong> ₹${admission.total_charges}</p>
+                                <p><strong>Status:</strong> <span class="badge bg-${admission.status === 'admitted' ? 'success' : 'warning'}">${admission.status}</span></p>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <h5>Doctor's Notes:</h5>
+                            <div class="p-3 bg-light rounded">${admission.notes || 'No notes provided'}</div>
+                        </div>`;
+                    
+                    if (admission.discharge_date) {
+                        html += `
+                        <div class="mt-3">
+                            <h5>Discharge Details:</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Discharged On:</strong> ${new Date(admission.discharge_date).toLocaleString()}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Discharge Notes:</strong> ${admission.discharge_notes || 'None'}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+                    
+                    document.getElementById('admissionDetailsContent').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('admissionDetailsContent').textContent = 'Error loading admission details';
+                });
+        });
+    }
+
+    // Handle discharge modal
+    const dischargeModal = document.getElementById('dischargeModal');
+    if (dischargeModal) {
+        dischargeModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const admissionId = button.getAttribute('data-admission-id');
+            const patientName = button.getAttribute('data-patient-name');
+            
+            document.getElementById('dischargeAdmissionId').value = admissionId;
+            document.getElementById('dischargePatientText').textContent = 
+                `Are you sure you want to discharge ${patientName}?`;
+        });
+    }
+
+    // Handle edit ward modal
+    const editWardModal = document.getElementById('editWardModal');
+    if (editWardModal) {
+        editWardModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const wardId = button.getAttribute('data-ward-id');
+            const wardName = button.getAttribute('data-ward-name');
+            const wardCapacity = button.getAttribute('data-ward-capacity');
+            const wardPrice = button.getAttribute('data-ward-price');
+            
+            document.getElementById('editWardId').value = wardId;
+            document.getElementById('editWardName').value = wardName;
+            document.getElementById('editWardCapacity').value = wardCapacity;
+            document.getElementById('editWardPrice').value = wardPrice;
+        });
+    }
+
+    // Confirm discharge button
+    document.getElementById('confirmDischargeBtn')?.addEventListener('click', function() {
+        const admissionId = document.getElementById('dischargeAdmissionId').value;
+        const dischargeNotes = document.getElementById('dischargeNotes').value;
+        
+        fetch('/admin/discharge_patient', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                admission_id: admissionId,
+                discharge_notes: dischargeNotes
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error discharging patient');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error discharging patient');
+        });
+    });
+
+    // Save ward changes button
+    document.getElementById('saveWardBtn')?.addEventListener('click', function() {
+        const wardId = document.getElementById('editWardId').value;
+        const wardName = document.getElementById('editWardName').value;
+        const wardCapacity = document.getElementById('editWardCapacity').value;
+        const wardPrice = document.getElementById('editWardPrice').value;
+        
+        fetch('/admin/update_ward', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ward_id: wardId,
+                name: wardName,
+                capacity: wardCapacity,
+                price_per_day: wardPrice
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error updating ward');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating ward');
+        });
+    });
+
+    // Add new ward form
+    document.getElementById('addWardForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const wardName = document.getElementById('ward_name').value;
+        const wardCapacity = document.getElementById('ward_capacity').value;
+        const wardPrice = document.getElementById('ward_price').value;
+        
+        fetch('/admin/add_ward', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: wardName,
+                capacity: wardCapacity,
+                price_per_day: wardPrice
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error adding ward');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error adding ward');
+        });
+    });
+
+    // Print admission details
+    document.getElementById('printAdmissionBtn')?.addEventListener('click', function() {
+        const admissionContent = document.getElementById('admissionDetailsContent').innerHTML;
+        const printWindow = window.open('', '', 'width=800,height=600');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Admission Details</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <style>
+                        body { padding: 20px; }
+                        .print-header { margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <h2>Hospital Admission Details</h2>
+                        <p>Printed on: ${new Date().toLocaleString()}</p>
+                    </div>
+                    ${admissionContent}
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            setTimeout(function() {
+                                window.close();
+                            }, 1000);
+                        };
+                    <\/script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+    });
+});
+
+// Delete ward function
+function deleteWard(wardId) {
+    if (confirm('Are you sure you want to delete this ward? This cannot be undone.')) {
+        fetch('/admin/delete_ward', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ward_id: wardId
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error deleting ward');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting ward');
+        });
+    }
+}
+</script>
+{% endblock %}
